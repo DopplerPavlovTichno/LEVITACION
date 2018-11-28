@@ -20,8 +20,11 @@ unsigned long delay2 = 100;
 unsigned long t1 ;
 unsigned long t2 ;
 double pidresult ;
+double distancia_maxima ;
+double distancia_minima ;
 int valor ;
 const int led = 9;
+double para_actuador ;
 
 void setup() {
   // initialize the serial port:
@@ -29,18 +32,21 @@ void setup() {
   pinMode(echoPin, INPUT); // Sets the echoPin as an Input
   Serial.begin(9600);
   kp = 0.1;
-  ki = 0.01;
-  kd = 0.1;
+  ki = 10;
+  kd = 0;
   setpoint = 250 ;
   last_error = 0 ;
   dt = 1000;
   t1 = t2 = millis() ;
+  distancia_maxima = 400;
+  distancia_minima = 4;
 }
 
 void loop() {
   if(millis() - t1 > delay1) { //this will be executed every delay1 ms
     valor = 200  ;
-    analogWrite(led,min(pidresult,255));
+    para_actuador = calibracion(distance, 400, 4) ;
+    analogWrite(led,para_actuador);
     t1 = millis();
   }
   if(millis() - t2 > delay2) { //this will be executed every delay1 ms
@@ -73,3 +79,19 @@ double calculatePID(double distance, double setpoint, double kp, double ki, doub
   return PIDValue ;
  //analogWrite(controlPin, PIDValue);
 }
+
+double calibracion(double distance, double distancia_maxima, double distancia_minima) {
+  double para_actuador ;
+  double minpwm = 0 ;
+  double maxpwm = 255 ;
+  if (distance < distancia_minima) {
+    para_actuador = minpwm ;
+  } else if (distance > distancia_maxima) {
+    para_actuador = maxpwm ;
+  } else {
+    para_actuador = minpwm + (maxpwm - minpwm) * PIDValue / (distancia_maxima - distancia_minima) ; // es perfectible
+  }
+  Serial.println(para_actuador) ;
+  return para_actuador ;
+}
+
