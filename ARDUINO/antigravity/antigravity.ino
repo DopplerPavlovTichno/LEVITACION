@@ -6,7 +6,7 @@ double p_term;
 double i_term;
 double d_term;
 double PIDValue;
-double setpoint;
+int setpoint;
 int dt;
 double error;
 double last_error;
@@ -32,7 +32,7 @@ void setup() {
   pinMode(echoPin, INPUT); // Sets the echoPin as an Input
   Serial.begin(9600);
   kp = 0.1;
-  ki = 10;
+  ki = 0;
   kd = 0;
   setpoint = 250 ;
   last_error = 0 ;
@@ -65,6 +65,55 @@ void loop() {
     t2 = millis() ;
     //delay(dt);
   }
+    int i;
+    char val[4];
+    while(Serial.available()>0) {
+          val[i]=Serial.read();
+          i++;
+    }
+    switch(val[0]){
+      case 'p':
+        kp=atoi(&val[1]);
+        Serial.print("Kp= ");
+        Serial.print(kp);
+        Serial.println();
+        break;
+      case 'i':
+        ki=atoi(&val[1]);
+        Serial.print("Ki= ");
+        Serial.print(ki);
+        Serial.println();
+        break;
+      case 'd':
+        kd=atoi(&val[1]);
+        Serial.print("Kd= ");
+        Serial.print(kd);
+        Serial.println();
+        break;
+      case 's':
+        setpoint=atoi(&val[1]);
+        Serial.print("setpoint= ");
+        Serial.print(setpoint);
+        Serial.println();
+        break;
+      default:
+        break;
+     }
+    
+    //potencia= atoi(&val[0]);
+    //}
+    Serial.print("Kp= ");
+    Serial.print(kp);
+    Serial.println();
+    Serial.print("Kd= ");
+    Serial.print(kd);
+    Serial.println();
+    delay(1000);
+    
+  //}
+ // String val=String(Serial.read());
+ //Serial.println(val);
+
 }
 
 double calculatePID(double distance, double setpoint, double kp, double ki, double kd) {
@@ -75,7 +124,9 @@ double calculatePID(double distance, double setpoint, double kp, double ki, doub
   d_term = kd*(error-last_error)*1000/dt;;
   last_error = error;
   PIDValue = p_term + i_term + d_term;
-  //Serial.println(PIDValue);
+  Serial.print("pid = ");
+  Serial.print(PIDValue);
+  Serial.println();
   return PIDValue ;
  //analogWrite(controlPin, PIDValue);
 }
@@ -107,4 +158,3 @@ int input_actuador(double PIDv) {
   Serial.println(para_actuador) ;
   return para_actuador ;
 }
-
