@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-tau_1 = 0.5 # tiempo caracteristico de respuesta de la altura ante un salto tipo escalon en la frecuencia de la PWM
+tau_1 = 2 # tiempo caracteristico de respuesta de la altura ante un salto tipo escalon en la frecuencia de la PWM
 tau_2 = 0.01 # no lo voy a usar, lo desprecio frente a tau_1 
 
 # valores criticos (no tiene en cuenta histeresis)
@@ -11,10 +11,10 @@ pwm_upper = 230 # arriba de este valor llega a lo mas alto que puede (seguir aum
 d_lower = 40 # distancia medida cuando el objeto esta en el punto mas bajo posible
 d_upper = 4 # distancia medida cuando el objeto esta en el punto mas alto posible
 alpha = 1 # exponente en la relacion frecuencia de PWM - altura
-dt_sensor = 0.01 # tiempo entre lecturas del sensor (en segundos)
-#dt_actuador = 1 # por si el dt del actuador fuese distinto 
-
-#memoria = -1
+dt_sensor = 0.1 # tiempo entre lecturas del sensor (en segundos)
+#dt_actuador = 1 # por si el dt del actuador fuese distinto 
+n = 2000 # pasos de la iteracion
+memoria = -1 # memoria del termino integral (debe ser entero, si no es positivo, integra todo el error, si es positivo, integra solamente "memoria" terminos. Si "memoria" es mayor o igual al numero de iteraciones actua igual que si tuviera memoria infinita)
 
 # respuesta ante impulso
 
@@ -57,26 +57,27 @@ def G(outPID): # funcion que agarra la salida del PID y devuelve la entrada al a
 # inicio el algoritmo de PID
 
 kp = 10
-ki = 100
+ki = 1
 kd = 0
 d_inicial = d_lower # arranca desde abajo de todo (pegado al ventilador)
 setpoint = 20
 integral = 0
 lastError = 0
 errors = []
-cnt = 1
 
-def PID(d, sp, integral, lastError):
+def PID(d, sp, integral, lastError, cnt = 1):
     error = sp - d
     integral = integral + error * dt_sensor
     derivative = (error - lastError) / dt_sensor
-#    if memoria < 0:
-#        errors.append(error)
+    if memoria > 0:
+        errors.append(error)
+        if cnt > memoria:
+            errors.pop(0)
+        integral = sum(errors) * dt_sensor
     r = kp * error + ki * integral + kd * derivative
     lastError = error
-    return r, integral, lastError
-
-n = 2000 # pasos de la iteracion
+    cnt = cnt + 1
+    return r, integral, lastError, cnt
 
 lecturas_sensor = []
 salidas_PID = []
@@ -87,11 +88,12 @@ integral_inicial = 0
 lastError = 0
 tiempo = []
 setpoints = []
+cnt = 1
 
 for i in range(n):
     tiempo.append(dt_sensor*i)
     setpoints.append(setpoint)
-    [output_PID, integral, lastError] = PID(lecturas_sensor[i], setpoint, integral, lastError)
+    [output_PID, integral, lastError, cnt] = PID(lecturas_sensor[i], setpoint, integral, lastError, cnt)
     salidas_PID.append(output_PID)
     senial_actuador = G(output_PID)
     seniales_actuador.append(senial_actuador)
