@@ -24,7 +24,7 @@ double distancia_maxima ;
 double distancia_minima ;
 int valor ;
 const int led = 9;
-double para_actuador ;
+int para_actuador ;
 
 void setup() {
   // initialize the serial port:
@@ -80,16 +80,29 @@ double calculatePID(double distance, double setpoint, double kp, double ki, doub
  //analogWrite(controlPin, PIDValue);
 }
 
-double calibracion(double distance, double distancia_maxima, double distancia_minima) {
-  double para_actuador ;
-  double minpwm = 0 ;
-  double maxpwm = 255 ;
+int calibracion(double distance, double distancia_maxima, double distancia_minima) {
+  int para_actuador ;
+  int minpwm = 0 ;
+  int maxpwm = 255 ;
   if (distance < distancia_minima) {
     para_actuador = minpwm ;
   } else if (distance > distancia_maxima) {
     para_actuador = maxpwm ;
   } else {
-    para_actuador = minpwm + (maxpwm - minpwm) * PIDValue / (distancia_maxima - distancia_minima) ; // es perfectible
+    para_actuador = int(minpwm + (maxpwm - minpwm) * PIDValue / (distancia_maxima - distancia_minima)) ; // es perfectible
+  }
+  Serial.println(para_actuador) ;
+  return para_actuador ;
+}
+
+int input_actuador(double PIDv) {
+  int para_actuador ;
+  if (PIDv < 0) {
+    para_actuador = 255 ;
+  } else if (PIDv > 255) {
+    para_actuador = 0 ;
+  } else {
+    para_actuador = 255 - PIDv ;
   }
   Serial.println(para_actuador) ;
   return para_actuador ;
