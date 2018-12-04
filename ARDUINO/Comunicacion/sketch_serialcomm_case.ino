@@ -23,7 +23,7 @@ void loop() {
         Serial.println();
         break;
       case 'i':
-        kd=atoi(&val[1]);
+        ki=atoi(&val[1]);
         Serial.print("Ki= ");
         Serial.print(ki);
         Serial.println();
