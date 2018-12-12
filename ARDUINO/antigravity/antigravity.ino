@@ -17,14 +17,20 @@ const int echoPin = 13;
 const int controlPin = 1;
 unsigned long delay1 = 100;
 unsigned long delay2 = 100;
+unsigned long tiempo_cada_pwm = 30000 ; // 30 segundos cada nivel de PWM, para estudiar el ciclo de histéresis en estacionario en cada nivel
 unsigned long t1 ;
 unsigned long t2 ;
+unsigned long t0 ;
+int n0 ;
+int n ;
 double pidresult ;
 double distancia_maxima ;
 double distancia_minima ;
-int valor ;
+int valorpwm = 140 ;
 const int pwm_pin = 9;
 int para_actuador ;
+int contador = 0 ;
+int cont2 = 0 ;
 
 void setup() {
   // initialize the serial port:
@@ -33,22 +39,34 @@ void setup() {
   Serial.begin(9600);
   kp = 1;
   ki = 0.01;
-  kd = 0;
-  setpoint = 200 ;
+  kd = 0.1;
+  setpoint = 250 ;
   last_error = 0 ;
-  dt = 1000;
-  t1 = t2 = millis() ;
+  dt = 100;
+  t0 = t1 = t2 = millis() ;
   distancia_maxima = 400;
   distancia_minima = 4;
+  n0 = int(tiempo_cada_pwm / delay1) ;
+  n = n0 ;
 }
 
 void loop() {
   if(millis() - t1 > delay1) { //this will be executed every delay1 ms
-    valor = 200  ;
-    para_actuador = input_actuador(pidresult) ;
-    analogWrite(pwm_pin, para_actuador);
+//    para_actuador = input_actuador(pidresult) ; // esta es con control
+    contador = contador + 1 ; // esto es para alimentar con una escalera primero ascendente y luego descendente, para ver el ciclo de histéresis. No tiene control.
+    if(contador == n) {
+      if(cont2 < 10){
+        valorpwm = valorpwm + 5 ; // si tuviera control, valorpwm saldría directamente de la función para_actuador
+        cont2 = cont2 + 1 ;
+      } else if(cont2 < 20){
+        valorpwm = valorpwm - 5 ;
+        cont2 = cont2 + 1 ;
+      }
+      n = n + n0 ;
+    }
+    analogWrite(pwm_pin, valorpwm); // en el caso con control aca viene analogWrite(pwm_pin, para_actuador); 
     Serial.print("Input actuador = ");
-    Serial.print(para_actuador);
+    Serial.print(valorpwm); // en el caso con control es Serial.print(para_actuador) ;
     Serial.println() ;
     t1 = millis();
   }
